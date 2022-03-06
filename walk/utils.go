@@ -1,10 +1,8 @@
-package common
+package walk
 
 import (
 	"bufio"
 	"io"
-
-	"github.com/alsritter/walk/log"
 )
 
 type LineNumberReader struct {
@@ -32,7 +30,10 @@ func (r *LineNumberReader) ReadLine() string {
 		return r.scanner.Text()
 	}
 
-	log.Error(r.scanner.Err().Error())
+	if r.scanner.Err() != nil {
+		panic(NewWalkError("", nil))
+	}
+
 	return ""
 }
 

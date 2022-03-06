@@ -1,8 +1,4 @@
-package token
-
-import (
-	"github.com/alsritter/walk/pkg/walk_error"
-)
+package walk
 
 const EOL = "\\n"          // EOL is end of line
 var eof = NewBaseToken(-1) // singleton instance
@@ -19,6 +15,7 @@ type Token interface {
 	IsString() bool
 	GetNumber() int32
 	GetString() string
+	GetText() string
 }
 
 type BaseToken struct {
@@ -37,6 +34,8 @@ func (t *BaseToken) IsNumber() bool { return false }
 
 func (t *BaseToken) IsString() bool { return false }
 
-func (t *BaseToken) GetNumber() int32 { panic(walk_error.NewWalkError("not number token")) }
+func (t *BaseToken) GetNumber() int32 { panic(NewWalkError("not number token", nil)) }
 
 func (t *BaseToken) GetString() string { return "" }
+
+func (t *BaseToken) GetText() string { return "" }

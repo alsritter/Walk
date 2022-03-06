@@ -3,48 +3,45 @@ package walk
 import (
 	"io"
 	"regexp"
-
-	"github.com/alsritter/walk/common"
-	"github.com/alsritter/walk/pkg/token"
 )
 
 type ILexer interface {
-	Peek(i int) token.Token
-	Read() token.Token
+	Peek(i int) Token
+	Read() Token
 }
 
 const regexPat = `\s*((//.*) | ([0-9]+) | ("(\\"|\\\\|\\n|[^"])*") | [A-Z_a-z][A-Z_a-z0-9]*|==|<=|>=|&&|\|\||[[:punct:]])?`
 
 type lexer struct {
-	queue   []*token.BaseToken // list of tokens
-	reg     *regexp.Regexp     // regular expression
+	queue   []Token        // list of tokens
+	reg     *regexp.Regexp // regular expression
 	hasMore bool
-	reader  *common.LineNumberReader // Line number reader
+	reader  *LineNumberReader // Line number reader
 }
 
 func NewLexer(reader io.Reader) ILexer {
 	lex := new(lexer)
-	lex.queue = make([]*token.BaseToken, 0)
+	lex.queue = make([]Token, 0)
 	lex.reg = regexp.MustCompile(regexPat)
 	lex.hasMore = true
-	lex.reader = common.NewLineNumberReader(reader)
+	lex.reader = NewLineNumberReader(reader)
 	return lex
 }
 
-func (l *lexer) Read() token.Token {
+func (l *lexer) Read() Token {
 	if l.fillQueue(0) {
 		l.queue = l.queue[1:] // remove first Token.
 		return l.queue[0]
 	} else {
-		return token.EOF()
+		return EOF()
 	}
 }
 
-func (l *lexer) Peek(i int) token.Token {
+func (l *lexer) Peek(i int) Token {
 	if l.fillQueue(0) {
 		return l.queue[0]
 	} else {
-		return token.EOF()
+		return EOF()
 	}
 }
 
@@ -60,11 +57,18 @@ func (l *lexer) fillQueue(i int) bool {
 }
 
 func (l *lexer) readLine() {
-	line := l.reader.ReadLine()
+	line := ""
+	if err := RecoverToError(func() {
+		line = l.reader.ReadLine()
+	}); err != nil {
+		PanicError(NewParseError3("read a Line error", err))
+	}
+
 	if line == "" {
 		l.hasMore = false
 		return
 	}
+
 	lineNo := l.reader.GetLineNumber()
 	pos := 0
 	endPos := len(line)
