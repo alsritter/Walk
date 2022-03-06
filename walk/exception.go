@@ -10,7 +10,7 @@ type WalkException struct {
 	Next error
 }
 
-func NewWalkError(msg string, err error) *WalkException {
+func NewWalkError(msg string, err error) StError {
 	return &WalkException{Msg: msg, Next: err}
 }
 
@@ -34,15 +34,15 @@ type ParseException struct {
 	Next error
 }
 
-func NewParseError(msg string, t Token, err error) *ParseException {
+func NewParseError(msg string, t Token, err error) StError {
 	return &ParseException{msg: "syntax error around " + location(t) + ". " + msg, Next: err}
 }
 
-func NewParseError2(t Token, err error) *ParseException {
+func NewParseError2(t Token, err error) StError {
 	return &ParseException{msg: "syntax error around " + location(t) + ". ", Next: err}
 }
 
-func NewParseError3(msg string, err error) *ParseException {
+func NewParseError3(msg string, err error) StError {
 	return &ParseException{msg: msg, Next: err}
 }
 
@@ -63,6 +63,29 @@ func (p *ParseException) Unwrap() error {
 
 func (w *ParseException) Is(target error) bool {
 	_, ok := target.(*ParseException)
+	return ok
+}
+
+// =======================IndexOutOfBoundsException===============
+type IndexOutOfBoundsException struct {
+	msg  string
+	Next error
+}
+
+func NewIndexOutOfBoundsException(msg string, err error) StError {
+	return &IndexOutOfBoundsException{msg: "Index out of " + msg, Next: err}
+}
+
+func (i *IndexOutOfBoundsException) Error() string {
+	return i.msg
+}
+
+func (i *IndexOutOfBoundsException) Unwrap() error {
+	return i.Next
+}
+
+func (i *IndexOutOfBoundsException) Is(target error) bool {
+	_, ok := target.(*IndexOutOfBoundsException)
 	return ok
 }
 
