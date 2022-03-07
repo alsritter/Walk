@@ -70,6 +70,8 @@ func (a *ASTLeaf) Location() string { return fmt.Sprintf("at line %d", a.token.G
 
 func (a *ASTLeaf) ToString() string { return a.token.GetText() }
 
+func (a *ASTLeaf) Token() walk.Token { return a.token }
+
 // ============================ASTList=============================
 
 type ASTList struct {
@@ -77,9 +79,6 @@ type ASTList struct {
 }
 
 func NewASTList(list []ASTree) ASTree {
-	if list == nil {
-		walk.PanicError(walk.NewWalkError("ASTList parameter list not is a nil", nil))
-	}
 	return &ASTList{children: list}
 }
 
@@ -87,7 +86,6 @@ func (a *ASTList) NumChildren() int { return len(a.children) }
 
 func (a *ASTList) Child(i int) ASTree { return a.children[i] }
 
-// FIXME: error handling?
 func (a *ASTList) Children() *Iterator {
 	return Ints(a.children).Iterator()
 }
@@ -112,4 +110,60 @@ func (a *ASTList) ToString() string {
 		sb.WriteString(t.ToString())
 	}
 	return sb.String()
+}
+
+// ====================BinaryExpr=========================
+type BinaryExpr struct {
+	ASTree
+}
+
+func NewBinaryExpr(list []ASTree) ASTree {
+	return &BinaryExpr{
+		ASTree: NewASTList(list),
+	}
+}
+
+func (e *BinaryExpr) Left() ASTree {
+	return e.Child(0)
+}
+
+func (e *BinaryExpr) Right() ASTree {
+	return e.Child(2)
+}
+
+func (e *BinaryExpr) Operator() string {
+	leaf := e.Child(1).(*ASTLeaf)
+	return leaf.token.GetText()
+}
+
+// =====================NumberLiteral=====================
+type NumberLiteral struct {
+	ASTree
+}
+
+func NewNumberLiteral(t walk.Token) ASTree {
+	return &NumberLiteral{
+		ASTree: NewASTLeaf(t),
+	}
+}
+
+func (e *NumberLiteral) Value() int32 {
+	t := e.ASTree.(*ASTLeaf)
+	return t.Token().GetNumber()
+}
+
+// ==========================Name=============================
+type Name struct {
+	ASTree
+}
+
+func NewName(t walk.Token) ASTree {
+	return &Name{
+		ASTree: NewASTLeaf(t),
+	}
+}
+
+func (e *Name) Name() string {
+	t := e.ASTree.(*ASTLeaf)
+	return t.Token().GetText()
 }
